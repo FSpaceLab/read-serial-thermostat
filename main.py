@@ -24,8 +24,9 @@ class Connecter():
 
     def serial(self, set_data=False, data=''):
         if not set_data:
+            data = self.ser.readline()
             self.ser.reset_input_buffer()
-            return self.ser.readline()
+            return data
 
         elif set_data and data:
             self.ser.write(data.encode())
@@ -50,6 +51,7 @@ class Connecter():
             index_next = datetime.strptime(text_next[0], "%Y-%m-%d %H-%M")
             if index.timestamp() < datetime.now().timestamp() < index_next.timestamp():
                 print(text[1])
+                return text[1]
 
     def send_data(self):
         self.serial(set_data=True, data=self.parser())
@@ -65,9 +67,7 @@ class Connecter():
                     connection.sendall(d)
                     print(f'::: {data.decode()}')
                     self.send_data()
-                    # print('sending data back to the client')
-                    # connection.sendall(serial_data.encode())
-                    # connection.sendall("response".encode())
+
                 else:
                     break
 
