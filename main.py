@@ -1,6 +1,8 @@
-
+from datetime import datetime
 import socket
 import serial
+
+filename = "program"
 
 
 class Connecter():
@@ -17,34 +19,52 @@ class Connecter():
         self.sock.listen(1)
 
         # Connect to Serial
-        # self.ser = serial.Serial('COM6', 9600)
+        self.ser = serial.Serial('/dev/ttyUSB0', 9600)
+
 
     def serial(self, set_data=False, data=''):
         if not set_data:
             self.ser.reset_input_buffer()
-            return self.ser.readline().decode()
+            return self.ser.readline()
 
         elif set_data and data:
             self.ser.write(data.encode())
 
+    def read_program(self):
+        line_list = [line.rstrip('\n') for line in open(filename)]
+        return line_list
+
     def get_data(self):
         pass
 
-    def set_data(self):
-        pass
+    def parser(self):
+        p = self.read_program()
+        p.reverse()
+        len_p = len(p)
 
-    def parser(self, data):
-        pass
+        while len_p:
+            len_p -= 1
+            text = p[len_p].split(":")
+            text_next = p[len_p - 1].split(":")
+            index = datetime.strptime(text[0], "%Y-%m-%d %H-%M")
+            index_next = datetime.strptime(text_next[0], "%Y-%m-%d %H-%M")
+            if index.timestamp() < datetime.now().timestamp() < index_next.timestamp():
+                print(text[1])
+
+    def send_data(self):
+        self.serial(set_data=True, data=self.parser())
 
     def do(self):
         connection, client_address = self.sock.accept()
         try:
             while True:
-                data = connection.recv(1024)
+                data = connection.recv(2048)
                 if data:
-                    connection.sendall(self.parser(data).encode())
+                    d = self.serial()
+                    print(d)
+                    connection.sendall(d)
                     print(f'::: {data.decode()}')
-
+                    self.send_data()
                     # print('sending data back to the client')
                     # connection.sendall(serial_data.encode())
                     # connection.sendall("response".encode())
@@ -56,12 +76,12 @@ class Connecter():
             connection.close()
 
 
-
-
-
 if __name__ == "__main__":
     connecter = Connecter()
     while True:
         connecter.do()
+
+
+
 
 
