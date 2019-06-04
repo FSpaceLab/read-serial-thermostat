@@ -30,17 +30,17 @@ class Connecter():
         self.sock.listen(1)
 
         # Connect to Serial
-        # self.ser = serial.Serial('/dev/ttyUSB0', 9600)
+        self.ser = serial.Serial('/dev/ttyUSB0', 9600)
 
 
-    # def serial(self, set_data=False, data=''):
-    #     if not set_data:
-    #         data = self.ser.readline()
-    #         self.ser.reset_input_buffer()
-    #         return data
-    #
-    #     elif set_data and data:
-    #         self.ser.write(data.encode())
+    def serial(self, set_data=False, data=''):
+        if not set_data:
+            data = self.ser.readline()
+            self.ser.reset_input_buffer()
+            return data
+
+        elif set_data and data:
+            self.ser.write(data.encode())
 
     def read_program(self):
         line_list = [line.rstrip('\n') for line in open(filename)]
@@ -107,7 +107,7 @@ class Connecter():
 
     def send_data(self):
         pass
-        # self.serial(set_data=True, data=self.parser())
+        self.serial(set_data=True, data=self.parser())
 
     def do(self):
         connection, client_address = self.sock.accept()
