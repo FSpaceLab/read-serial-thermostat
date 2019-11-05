@@ -1,28 +1,8 @@
 import datetime as dt
 import socket
 import serial
+from settings import *
 
-SOCK_HOST = 'localhost'
-SOCK_PORT = 10000
-SERIAL_PORT = '/dev/ttyUSB0'
-SERIAL_SPEED = 9600
-
-filename = 'program'
-SET_PROGRAM = b'set_program'
-SEND_DATA = b'send_data'
-STOP_PROGRAM = b'stop'
-GET_DATA = b'get_data'
-
-DAYS = 1
-HOURS = 2
-MINUTES = 3
-TS_STATE = 4
-SETTED_T = 5
-LIGHT_STATE = 8
-LIGHT_UV = 9
-LIGTH_R = 10
-LIGTH_G = 11
-LIGTH_B = 12
 
 """
 ['0', '0', '19.09', '8', '0', '0', '2', '255', '112', '112', '255']
@@ -77,6 +57,13 @@ class Connecter():
 
     @staticmethod
     def write_program(data: list):
+        """
+        Формат запису програми:
+            2019-11-05 20-41: <TS_STATE>; <SETTED_T>; <CO2_STATE>; <SETTED_CO2>; <LIGHT_STATE>; <UV>; <R>; <G>; <B>;
+            2019-11-07 12-41: end_program;
+
+        :param data: Order; Days; Hours; Min; TS_STATE; SET_T; STATE_CO2; SET_CO2; LIGHT_STATE; UV; R; G; B;
+        """
         program = ""
         next_timedelta = dt.timedelta()
         last_duration = None
@@ -100,20 +87,12 @@ class Connecter():
                 next_timedelta += dt.timedelta(hours=int(separated_items[HOURS]))
                 next_timedelta += dt.timedelta(minutes=int(separated_items[MINUTES]))
 
-#                phase += separated_items[0] + "; "
-#                phase += separated_items[1] + "; "
-#                phase += separated_items[2] + "; "
-#                phase += separated_items[3] + "; "
-                phase += separated_items[4] + "; "
-                phase += separated_items[5] + "; "
-                phase += separated_items[6] + "; "
-                phase += separated_items[7] + "; "
-                phase += separated_items[8] + ";"
-                phase += separated_items[9] + ";"
-                phase += separated_items[10] + ";"
-                phase += separated_items[11] + ";"
-                phase += separated_items[12] + ";\n"
-                program += phase
+                # Додавання всіх даних до програми, починаючи з стану термостату і закінчуючи
+                # інтенсивністю синього світла
+                for i in range(TS_STATE, LIGTH_B+1):
+                    phase += separated_items[i] + "; "
+
+                program += phase + ";\n"
 
         # записування кінця виконання програми
         program += (last_duration + next_timedelta).strftime("%Y-%m-%d %H-%M") + ": end_program;"
@@ -166,7 +145,7 @@ class Connecter():
                     break
 
         finally:
-            # Clean up the connection
+            # Запуск програми на виконання
             self.send_data()
             connection.close()
 
