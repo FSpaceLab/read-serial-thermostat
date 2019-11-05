@@ -3,7 +3,7 @@ import socket
 import serial
 
 SOCK_HOST = 'localhost'
-SOCK_PORT = 10002
+SOCK_PORT = 10000
 SERIAL_PORT = '/dev/ttyUSB0'
 SERIAL_SPEED = 9600
 
@@ -100,16 +100,19 @@ class Connecter():
                 next_timedelta += dt.timedelta(hours=int(separated_items[HOURS]))
                 next_timedelta += dt.timedelta(minutes=int(separated_items[MINUTES]))
 
-                phase += separated_items[0] + "; "
-                phase += separated_items[1] + "; "
-                phase += separated_items[2] + "; "
-                phase += separated_items[3] + "; "
+#                phase += separated_items[0] + "; "
+#                phase += separated_items[1] + "; "
+#                phase += separated_items[2] + "; "
+#                phase += separated_items[3] + "; "
                 phase += separated_items[4] + "; "
                 phase += separated_items[5] + "; "
                 phase += separated_items[6] + "; "
                 phase += separated_items[7] + "; "
-                phase += separated_items[8] + ";\n"
-
+                phase += separated_items[8] + ";"
+                phase += separated_items[9] + ";"
+                phase += separated_items[10] + ";"
+                phase += separated_items[11] + ";"
+                phase += separated_items[12] + ";\n"
                 program += phase
 
         # записування кінця виконання програми
