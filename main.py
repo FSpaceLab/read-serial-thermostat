@@ -1,6 +1,7 @@
 import datetime as dt
 import socket
 import serial
+import re
 from settings import *
 
 
@@ -67,32 +68,44 @@ class Connecter():
         program = ""
         next_timedelta = dt.timedelta()
         last_duration = None
-        for item in data:
-            if item and item != SET_PROGRAM:
-                separated_items = item.decode().split(";")
 
-                phase = ""
+        # Отримання ID програми і видалення його зі списку
+        pattern_id = "^program_id: ([\d]+);$"
+        program_id = re.search(pattern_id, data.pop(1).decode()).group(1)
 
-                # Початок виконання фази
-                duration = dt.datetime.now()
-                duration += next_timedelta
+        # Отримання кількості повторень програми і видалення їх зі списку
+        pattern_repeating = "^repeating: ([\d]+);$"
+        program_repeating = int(re.search(pattern_repeating, data.pop(1).decode()).group(1))
 
-                phase += duration.strftime("%Y-%m-%d %H-%M") + ": "
+        for i_repeat in range(program_repeating):
+            for item in data:
+                if item and item != SET_PROGRAM:
+                    separated_items = item.decode().split(";")
 
-                # Збереження часу початку останньої фази для розрахунку часу кінця програми
-                last_duration = duration
+                    phase = ""
 
-                # Час закінчення виконання фази
-                next_timedelta += dt.timedelta(days=int(separated_items[DAYS]))
-                next_timedelta += dt.timedelta(hours=int(separated_items[HOURS]))
-                next_timedelta += dt.timedelta(minutes=int(separated_items[MINUTES]))
+                    # Початок виконання фази
+                    duration = dt.datetime.now()
+                    duration += next_timedelta
 
-                # Додавання всіх даних до програми, починаючи з стану термостату і закінчуючи
-                # інтенсивністю синього світла
-                for i in range(TS_STATE, LIGTH_B+1):
-                    phase += separated_items[i] + "; "
+                    phase += duration.strftime("%Y-%m-%d %H-%M") + ": "
 
-                program += phase + ";\n"
+                    # Збереження часу початку останньої фази для розрахунку часу кінця програми
+                    last_duration = duration
+
+                    # Час закінчення виконання фази
+                    next_timedelta += dt.timedelta(days=int(separated_items[DAYS]))
+                    next_timedelta += dt.timedelta(hours=int(separated_items[HOURS]))
+                    next_timedelta += dt.timedelta(minutes=int(separated_items[MINUTES]))
+
+                    # Додавання всіх даних до програми, починаючи з стану термостату і закінчуючи
+                    # інтенсивністю синього світла
+                    for i in range(TS_STATE, LIGTH_B+1):
+                        phase += separated_items[i] + "; "
+
+                    program += phase + ";\n"
+
+        print(program)
 
         # записування кінця виконання програми
         program += (last_duration + next_timedelta).strftime("%Y-%m-%d %H-%M") + ": end_program;"
@@ -127,20 +140,20 @@ class Connecter():
                 if separated_data[0] == SEND_DATA:
                     self.serial(set_data=True, data=separated_data[1].decode())
 
-
                 elif separated_data[0] == SET_PROGRAM:
                     self.write_program(separated_data)
-                    # self.send_data()
+                    self.send_data()
 
                 elif separated_data[0] == STOP_PROGRAM:
                     self.stop_program()
-                    # self.send_data()
+                    self.send_data()
 
                 elif separated_data[0] == GET_DATA:
                     d = self.serial()
-                    # self.send_data()
+                    self.send_data()
 
                     connection.sendall(d)
+                    pass
                 else:
                     break
 
